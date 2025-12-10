@@ -21,7 +21,7 @@
             max-width: 900px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: repaeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); <!-- Change: Fixed typo from "repaeat" to "repeat" to correct the CSS grid template columns syntax -->
             gap: 20px;
             padding: 20px;
         }
@@ -78,7 +78,7 @@
             border-radius: 10px;
             font-weight: bold;
         }
-        .back:hover { background : #c0171f; }
+        .back:hover { background: #c0171f; } <!-- Change: Removed unnecessary space before colon in "background :" for cleaner CSS (though it was valid, standardizing it) -->
     </style>
 </head>
     <body>
@@ -94,51 +94,51 @@
                 container.innerHTML = '';
 
                 if (matches.length === 0) {
-                    container.innerHTML = '<p class="no-matches">No matches tracked yet.</p>'
+                    container.innerHTML = '<p class="no-matches">No matches tracked yet.</p>';
                 } else {
                     const matchesByDate = {};
                     matches.forEach(m => {
                         const dateKey = m.time.split('T')[0];
                         if(!matchesByDate[dateKey]) matchesByDate[dateKey] = [];
                         matchesByDate[dateKey].push(m);
-                    })
-                }
-
-                const calendar = document.createElement('div');
-                calendar.className = 'calendar';
-
-                Object.keys(matchesByDate).sort().forEach(date => {
-                    const dayDiv = document.createElement('div');
-                    dayDiv.className = 'day';
-
-                    const dateObj = new Date(date);
-                    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                    const formattedDate = dateObj.toLocaleDateString(undefined, options);
-
-                    dayDiv.innerHTML = `<div class="date-header">${formattedDate}</div>`;
-
-                    matchesByDate[date].forEach(m => {
-                        const matchTime = new Date(m.time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-                        
-                        const matchDiv = document.createElement('div');
-                        matchDiv.className= 'match';
-                        matchDiv.innerHTML = `
-                        <div class="time">${matchTime}</div>
-                        <div>
-                            ${m.logoA ? `<img src="${m.logoA}" alt="${m.teamA}" class="team-logo">` : ''}
-                            <span class="team">${m.teamA}</span>
-                            vs
-                            <span class="team">${m.teamB}</span>
-                            ${m.logoB ? `<img src="${m.logoB}" alt="${m.teamB}" class="team-logo">` : ''}
-                            </div>
-                        `;
-                        dayDiv.appendChild(matchDiv);
                     });
 
-                    calendar.appendChild(dayDiv);
-                });
+                    const calendar = document.createElement('div');
+                    calendar.className = 'calendar';
 
-                container.appendChild(calendar);
+                    Object.keys(matchesByDate).sort().forEach(date => {
+                        const dayDiv = document.createElement('div');
+                        dayDiv.className = 'day';
+
+                        const dateObj = new Date(date);
+                        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                        const formattedDate = dateObj.toLocaleDateString(undefined, options);
+
+                        dayDiv.innerHTML = `<div class="date-header">${formattedDate}</div>`;
+
+                        matchesByDate[date].forEach(m => {
+                            const matchTime = new Date(m.time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                            
+                            const matchDiv = document.createElement('div');
+                            matchDiv.className= 'match';
+                            matchDiv.innerHTML = `
+                            <div class="time">${matchTime}</div>
+                            <div>
+                                ${m.logoA ? `<img src="${m.logoA}" alt="${m.teamA}" class="team-logo">` : ''}
+                                <span class="team">${m.teamA}</span>
+                                vs
+                                <span class="team">${m.teamB}</span>
+                                ${m.logoB ? `<img src="${m.logoB}" alt="${m.teamB}" class="team-logo">` : ''}
+                                </div>
+                            `;
+                            dayDiv.appendChild(matchDiv);
+                        });
+
+                        calendar.appendChild(dayDiv);
+                    });
+
+                    container.appendChild(calendar);
+                } <!-- Change: Moved the calendar creation and appending code inside the else block to ensure matchesByDate is in scope and only used when there are matches, preventing ReferenceError when there are matches -->
             </script>
     </body>
 </html>
