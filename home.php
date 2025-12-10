@@ -9,13 +9,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Homepage</title>
-    
+
     <style>
         body {
-            background: linear-gradient(rgba(255,255,255,0.75), rgba(0, 0, 0, 0.65)), url('background.jpg') center/cover fixed;
+            /* Implements a gradient onto the background image
+            fading from white to black, adding some depth */
+            background: linear-gradient(rgba(255,255,255,0.65), rgba(0, 0, 0, 0.65)), url('background.jpg') center/cover fixed;
             min-height: 100vh;
             text-align: center;
-            font-family: calibri;
+            font-family: calibri; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -27,23 +29,28 @@
             font-size: 48px;
         }
         .options {
+            /* Style container for all menu options */
             text-align: center;
             display: flex;
             flex-direction: column;
             margin-top: 35px;
             width: 80%;
+            max-width: 600px;
+            gap: 5px;
         }
         .menu {
+            /* Container for individual menu blocks */
             display: block;
             background-color: #ffffff;
             color: #2A398D;
             transition: all 0.3s;
-            padding: 5%;
+            padding: 50px 40px;
             border-radius: 25px;
             margin: 5px;
             font-size: 24px;
             font-weight: bold;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+            text-decoration: none;
         }
         .menu:hover {
             background-color: #E61D25;
