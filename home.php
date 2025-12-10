@@ -79,10 +79,11 @@
         <a href="midtermProject.html" class="menu">Tracking Page</a>
         <a href="calendar.html" class="menu">Calendar</a>
         <a href="stats.html" class="menu">Historical Stats</a>
-        <a href="standings.html" class="menu">Live Standings</a>
+        <a href="standings.php" class="menu">Live Standings</a>
      </div>
      <footer>
         © 2026 FIFA World Cup
      </footer>
 </body>
 </html>
+
