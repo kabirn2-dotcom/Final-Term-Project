@@ -1,0 +1,85 @@
+<!-- Standings Page-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standings</title>
+
+    <Style>
+        body {
+            background-color: whitesmoke;
+            text-align: center;
+            font-family: calibri;
+        }
+        h1, h4 {
+            margin: 0px;
+        }
+        table {
+            width: 95%;
+            margin: 0px auto;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            font-family: calibri, sans-serif;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px;
+        }
+        th {
+            background: red;
+        }
+        tr:nth-child(even) {
+            background-color: white;
+        }
+        tr:nth-child(odd) {
+            background-color: grey;
+        }
+        tr:hover {
+            background: antiquewhite;
+        }
+        h3 {
+            text-align: left;
+            margin: 20px;
+        }
+
+    </Style>
+</head>
+
+<body>
+    <h1>Standings</h1>
+    <h4>All standings here are updated with the tracker!</h4>
+    
+    <div class="groupStage">
+        <h3>Group A</h3>
+        <table>
+            <tr>
+                <th>Rank</th>
+                <th>Team</th>
+                <th>Wins</th>
+                <th>Losses</th>
+                <th>Draws</th>
+                <th>Points</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Mexico</td>
+                <td>2</td>
+                <td>0</td>
+                <td>1</td>
+                <td>7</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Portugal</td>
+                <td>1</td>
+                <td>2</td>
+                <td>0</td>
+                <td>3</td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>
