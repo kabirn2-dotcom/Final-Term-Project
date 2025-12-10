@@ -76,9 +76,9 @@
      each block contains a link that allows users
      to click on and travel to the various pages -->
      <div class="options">
-        <a href="midtermProject.html" class="menu">Tracking Page</a>
-        <a href="calendar.html" class="menu">Calendar</a>
-        <a href="stats.html" class="menu">Historical Stats</a>
+        <a href="tracking.php" class="menu">Tracking Page</a>
+        <a href="calendar.php" class="menu">Calendar</a>
+        <a href="stats.html" class="menu">Fixtures</a>
         <a href="standings.php" class="menu">Live Standings</a>
      </div>
      <footer>
@@ -86,4 +86,3 @@
      </footer>
 </body>
 </html>
-
