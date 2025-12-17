@@ -1,18 +1,23 @@
 <?php
+//  database connection setup
 $servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "fifatracker";
 
+// Create MySQL connection
 $conn = new mysqli($servername, $username, $password, $dbname);
 
+// Stop if connection fails
 if ($conn->connect_error) {
   die("Connection Failed");
 }
 
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+
 
 $input = json_decode(file_get_contents('php://input'), true);
 
@@ -20,6 +25,7 @@ if (is_array($input) && isset($input['action'])) {
   header('Content-Type: application/json');
   $action = $input['action'];
 
+  // Return all matches
   if ($action == 'get_matches') {
     $sql = "SELECT MatchID, TeamA, TeamB, `Date` FROM matches ORDER BY `Date` ASC";
     $result = $conn->query($sql);
@@ -30,6 +36,8 @@ if (is_array($input) && isset($input['action'])) {
       }
     }
     echo json_encode($matches);
+
+  // Add a new match
   } else if ($action == 'add_match') {
     $teamA = $input['teamA'];
     $teamB = $input['teamB'];
@@ -42,6 +50,8 @@ if (is_array($input) && isset($input['action'])) {
     $stmt->close();
 
     echo json_encode(['success' => $success, 'MatchID' => $matchID]);
+
+  // Update an existing match
   } else if ($action == 'update_match') {
     $matchID = $input['matchID'];
     $teamA = $input['teamA'];
@@ -54,6 +64,8 @@ if (is_array($input) && isset($input['action'])) {
     $stmt->close();
     
     echo json_encode(['success' => $success]);
+
+  // Delete a match
   } else if ($action == 'delete_match') {
     $matchID = $input['matchID'];
 
@@ -163,10 +175,12 @@ if (is_array($input) && isset($input['action'])) {
 <body>
   <h1>Match Tracker</h1>
 
+  <!-- Search bar -->
   <div id="searchContainer">
     <input type="text" id="searchInput" placeholder="Search by team or date...">
   </div>
 
+  <!-- Form to add or edit a match -->
   <form id="matchForm">
     <h3 id="formTitle">Add Match</h3>
     <input type="text" id="teamA" placeholder="Team A" list="worldCupTeams" required>
@@ -177,11 +191,14 @@ if (is_array($input) && isset($input['action'])) {
     <div id="errorMsg"></div>
   </form>
 
+  <!-- Team names -->
   <datalist id="worldCupTeams"></datalist>
 
+  <!-- Where all match cards will be shown -->
   <div id="matchList"></div>
 
   <script>
+    
     const form=document.getElementById('matchForm');
     const matchList=document.getElementById('matchList');
     const errorMsg=document.getElementById('errorMsg');
@@ -190,10 +207,12 @@ if (is_array($input) && isset($input['action'])) {
     const formTitle=document.getElementById('formTitle');
     const searchInput=document.getElementById('searchInput');
 
+    // Data/stats
     let matches=[];
     let editingIndex=-1;
     const timers=[];
 
+    // List of World Cup teams
     const WORLD_CUP_TEAMS=[
       "Australia","Iran","Japan","Jordan","Qatar","Saudi Arabia",
       "South Korea","Uzbekistan","Canada","Curacao","Haiti","Mexico",
@@ -204,6 +223,7 @@ if (is_array($input) && isset($input['action'])) {
       "Scotland","Spain","Switzerland"
     ];
 
+    // Map each team to its flag image
     const TEAM_LOGOS={
       "Australia":"allFlags/Flag_of_Australia_(converted).svg",
       "Iran":"allFlags/State_flag_of_Iran_(1964–1980).png",
@@ -249,6 +269,7 @@ if (is_array($input) && isset($input['action'])) {
       "Switzerland":"allFlags/Flag-Switzerland.png"
     };
 
+    // Fill datalist with team names
     const datalist=document.getElementById('worldCupTeams');
     WORLD_CUP_TEAMS.forEach(t=>{
       const opt=document.createElement('option');
@@ -256,6 +277,7 @@ if (is_array($input) && isset($input['action'])) {
       datalist.appendChild(opt);
     });
 
+    // Load matches from server
     async function loadMatches() {
       const response = await fetch('tracking.php', {
         method: 'POST',
@@ -267,6 +289,7 @@ if (is_array($input) && isset($input['action'])) {
       displayMatches(term);
     }
 
+    // Render match cards with filter term
     function displayMatches(filterTerm=""){
       timers.forEach(id=>clearInterval(id));
       timers.length=0;
@@ -303,6 +326,7 @@ if (is_array($input) && isset($input['action'])) {
       });
     }
 
+    // Update countdown text and match status color
     function updateCountdown(idx,m){
       const now=new Date();
       const matchTime=new Date(m.Date);
@@ -325,12 +349,14 @@ if (is_array($input) && isset($input['action'])) {
       }
     }
 
+    // Shows a error under the form
     function showError(txt){
       errorMsg.textContent=txt;
       errorMsg.style.display='block';
       setTimeout(()=>errorMsg.style.display='none',5000);
     }
 
+    // Load data of a match 
     function startEdit(id){
       const m=matches.find(match => match.MatchID == id);
       document.getElementById('teamA').value=m.TeamA;
@@ -343,6 +369,7 @@ if (is_array($input) && isset($input['action'])) {
       errorMsg.style.display='none';
     }
 
+    // Delete match by ID via API
     async function deleteMatch(id){
       if(confirm('Delete this match?')) {
         const response = await fetch('tracking.php', {
@@ -357,6 +384,7 @@ if (is_array($input) && isset($input['action'])) {
       }
     }
 
+    // Reset form back to "Add" mode
     function cancelEdit(){
       editingIndex=-1;
       formTitle.textContent='Add Match';
@@ -366,6 +394,7 @@ if (is_array($input) && isset($input['action'])) {
       errorMsg.style.display='none';
     }
 
+    // Handle add/update 
     form.addEventListener('submit',async e=>{
       e.preventDefault();
       const teamA=document.getElementById('teamA').value.trim();
@@ -391,13 +420,16 @@ if (is_array($input) && isset($input['action'])) {
         }
     });
 
+    
     cancelBtn.addEventListener('click',cancelEdit);
 
+    // search filter
     searchInput.addEventListener('input',()=>{
       const term=searchInput.value.toLowerCase();
       displayMatches(term);
     });
 
+    // Initial load
     loadMatches();
   </script>
   <footer>© 2026 FIFA World Cup</footer>
