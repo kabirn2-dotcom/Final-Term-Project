@@ -1,5 +1,5 @@
-#FIFA World Cup Match Tracker!
-Contributions:
+#FIFA World Cup Match Tracker!<br>
+Contributions:<br>
 Samuel:
 - Database strutcure and integration
 - Standings Page arcitecture
