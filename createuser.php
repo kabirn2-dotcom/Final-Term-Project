@@ -1,11 +1,20 @@
 <?php
+// Start the session 
 session_start();
+
+// Messages for the user
 $error = "";
 $success = "";
+
+// Check for submission
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    // Read and clean the inputs
     $email = trim($_POST["email"] ?? "");
     $password = trim($_POST["password"] ?? "");
+
+    
     if ($email !== "" && $password !== "") {
+        
         $_SESSION["user"] = ["email"=>$email,"password"=>$password];
         $success = "User created. You can log in.";
     } else {
@@ -93,12 +102,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <body>
   <div class="card">
     <h1>Create User</h1>
+
+    <!-- Show error message -->
     <?php if ($error !== ""): ?>
       <div class="error"><?php echo $error; ?></div>
     <?php endif; ?>
+
+    <!-- Show success message -->
     <?php if ($success !== ""): ?>
       <div class="success"><?php echo $success; ?></div>
     <?php endif; ?>
+
+    <!-- Form for creating a new user -->
     <form method="post" action="">
       <label for="email">Email</label>
       <input type="email" id="email" name="email" required>
@@ -108,6 +123,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
       <button type="submit">Create User</button>
     </form>
+
+    <!-- Link back to the login page -->
     <div class="small">
       <a href="login.php">Back to Login</a>
     </div>
