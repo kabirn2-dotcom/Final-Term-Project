@@ -78,7 +78,7 @@
      <div class="options">
         <a href="tracking.php" class="menu">Tracking Page</a>
         <a href="calendar.php" class="menu">Calendar</a>
-        <a href="stats.html" class="menu">Fixtures</a>
+        <a href="fixtures.php" class="menu">Fixtures</a>
         <a href="standings.php" class="menu">Live Standings</a>
      </div>
      <footer>
