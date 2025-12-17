@@ -122,7 +122,7 @@
 
                     const dateObj = new Date(date);
                     const options = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
-                    const formattedDate = dateObj.toLocaleDateString(undefined, options);
+                    const formattedDate = dateObj.toLocaleDateString(undefined, {...options, timeZone: 'UTC'});
 
                     dayDiv.innerHTML = `<div class="date-header">${formattedDate}</div>`;
 
