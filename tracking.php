@@ -1,77 +1,172 @@
 <?php
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "fifatracker";
 
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+if ($conn->connect_error) {
+  die("Connection Failed");
+}
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+$input = json_decode(file_get_contents('php://input'), true);
+
+if (is_array($input) && isset($input['action'])) {
+  header('Content-Type: application/json');
+  $action = $input['action'];
+
+  if ($action == 'get_matches') {
+    $sql = "SELECT MatchID, TeamA, TeamB, `Date` FROM matches ORDER BY `Date` ASC";
+    $result = $conn->query($sql);
+    $matches = [];
+    if ($result->num_rows > 0) {
+      while ($row = $result->fetch_assoc()) {
+        $matches[] = $row;
+      }
+    }
+    echo json_encode($matches);
+  } else if ($action == 'add_match') {
+    $teamA = $input['teamA'];
+    $teamB = $input['teamB'];
+    $date = str_replace('T', ' ', $input['date']) . ':00';
+
+    $stmt = $conn->prepare("INSERT INTO matches (TeamA, TeamB, `Date`) VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $teamA, $teamB, $date);
+    $success = $stmt->execute();
+    $matchID = $conn->insert_id;
+    $stmt->close();
+
+    echo json_encode(['success' => $success, 'MatchID' => $matchID]);
+  } else if ($action == 'update_match') {
+    $matchID = $input['matchID'];
+    $teamA = $input['teamA'];
+    $teamB = $input['teamB'];
+    $date = str_replace('T', ' ', $input['date']) . ':00';
+
+    $stmt = $conn->prepare("UPDATE matches SET TeamA=?, TeamB=?, `Date`=? WHERE MatchID=?");
+    $stmt->bind_param("sssi", $teamA, $teamB, $date, $matchID);
+    $success = $stmt->execute();
+    $stmt->close();
+    
+    echo json_encode(['success' => $success]);
+  } else if ($action == 'delete_match') {
+    $matchID = $input['matchID'];
+
+    $stmt = $conn->prepare("DELETE FROM matches WHERE MatchID=?");
+    $stmt->bind_param("i", $matchID);
+    $success = $stmt->execute();
+    $stmt->close();
+
+    echo json_encode(['success' => $success]);
+  }
+  $conn->close();
+  exit;
+}
 ?>
-<!DOCTYPE html> <!-- Lecture 2: DOCTYPE declaration -->
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Lecture 2: Head section with metadata -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FIFA World Cup Match Tracker</title> <!-- Lecture 2: Title element -->
-
-  <!-- Lecture 4–5: Basic CSS styling (Ibrahim) -->
+  <title>FIFA World Cup Match Tracker</title>
   <style>
-    body {
-        background: linear-gradient(rgba(255,255,255,0.45), rgba(255, 255, 255, 0.45)), url('background.jpg') center/cover fixed;
-        min-height: 100vh;
-        font-family: Calibri, sans-serif;
-        margin: 20px;
+    body{
+      background:linear-gradient(rgba(255,255,255,0.45),rgba(255,255,255,0.45)),url('background.jpg') center/cover fixed;
+      min-height:100vh;
+      font-family:Calibri,sans-serif;
+      margin:20px;
     }
-    h1 {
-        text-align:center;
-        color:#003366;
-        font-size: 48px;
-        margin: 0px;
+    h1{
+      text-align:center;
+      color:#003366;
+      font-size:48px;
+      margin:0;
     }
-    #matchForm {
-      background:#fff;padding:20px;border-radius:8px;
+    #searchContainer{
+      width:340px;
+      margin:15px auto 5px auto;
+    }
+    #searchInput{
+      width:100%;
+      padding:8px;
+      box-sizing:border-box;
+      border-radius:8px;
+      border:1px solid #ccc;
+    }
+    #matchForm{
+      background:#fff;
+      padding:20px;
+      border-radius:8px;
       box-shadow:0 0 5px rgba(0,0,0,.1);
-      width:340px;margin:0 auto;
+      width:340px;
+      margin:10px auto;
     }
-    #matchForm input, #matchForm button {
-      width: 100%;
-      padding: 8px;
-      margin: 8px 0;
+    #matchForm input,#matchForm button{
+      width:100%;
+      padding:8px;
+      margin:8px 0;
       box-sizing:border-box;
     }
     #errorMsg{
-        color: #c00;
-        font-size: 14px;
-        margin-top: 5px;
-        display: none;
+      color:#c00;
+      font-size:14px;
+      margin-top:5px;
+      display:none;
     }
     .match{
-      background:#fff;border:2px solid #ccc;border-radius:10px;
-      margin:15px auto;padding:12px;width:90%;max-width:520px;
-      text-align:center;transition:.3s;position:relative;
+      background:#fff;
+      border:2px solid #ccc;
+      border-radius:10px;
+      margin:15px auto;
+      padding:12px;
+      width:90%;
+      max-width:520px;
+      text-align:center;
+      transition:.3s;
+      position:relative;
     }
-    /* Lecture 4: Pseudoclass hover */
-    .match:hover{box-shadow:0 0 12px #007bff;cursor:pointer;}
-    .upcoming   {background:#fff;}
-    .ongoing    {background:#d4edda;}
-    .completed  {background:#e2e3e5;}
-    .team-logo{height:40px;vertical-align:middle;margin:0 4px;}
+    .match:hover{
+      box-shadow:0 0 12px #007bff;
+      cursor:pointer;
+    }
+    .upcoming{background:#fff;}
+    .ongoing{background:#d4edda;}
+    .completed{background:#e2e3e5;}
+    .team-logo{
+      height:40px;
+      vertical-align:middle;
+      margin:0 4px;
+    }
     .btn{
-      margin:5px 3px;padding:4px 8px;font-size:13px;cursor:pointer;
+      margin:5px 3px;
+      padding:4px 8px;
+      font-size:13px;
+      cursor:pointer;
     }
     .btn-edit{background:#ffc107;color:#212529;}
     .btn-delete{background:#dc3545;color:#fff;}
     .btn-cancel{background:#6c757d;color:#fff;}
-    footer {
-            margin-top: auto;
-            padding: 20px;
-            font-size: 14px;
-            color: black;
-            text-align: center;
-        }
+    footer{
+      margin-top:auto;
+      padding:20px;
+      font-size:14px;
+      color:black;
+      text-align:center;
+    }
   </style>
 </head>
-
 <body>
-  <!-- Lecture 2: Heading and structure (Ibrahim) -->
   <h1>Match Tracker</h1>
 
-  <!-- Lecture 2: HTML Form for adding matches -->
+  <div id="searchContainer">
+    <input type="text" id="searchInput" placeholder="Search by team or date...">
+  </div>
+
   <form id="matchForm">
     <h3 id="formTitle">Add Match</h3>
     <input type="text" id="teamA" placeholder="Team A" list="worldCupTeams" required>
@@ -82,40 +177,34 @@
     <div id="errorMsg"></div>
   </form>
 
-  <!-- All teams qualified for the 2026 World Cup -->
   <datalist id="worldCupTeams"></datalist>
 
-  <!-- Lecture 2–3: Section to display list of matches (Nawal) -->
   <div id="matchList"></div>
 
-  <!-- Lecture 6–8: JavaScript logic (Nawal) -->
   <script>
-    // Lecture 6: Accessing the document object and DOM manipulation
-    const form       = document.getElementById('matchForm');
-    const matchList  = document.getElementById('matchList');
-    const errorMsg   = document.getElementById('errorMsg');
-    const submitBtn  = document.getElementById('submitBtn');
-    const cancelBtn  = document.getElementById('cancelBtn');
-    const formTitle  = document.getElementById('formTitle');
+    const form=document.getElementById('matchForm');
+    const matchList=document.getElementById('matchList');
+    const errorMsg=document.getElementById('errorMsg');
+    const submitBtn=document.getElementById('submitBtn');
+    const cancelBtn=document.getElementById('cancelBtn');
+    const formTitle=document.getElementById('formTitle');
+    const searchInput=document.getElementById('searchInput');
 
-    // Lecture 8: Using localStorage
-    let matches      = JSON.parse(localStorage.getItem('matches')) || [];
-    let editingIndex = -1;          // -1 = adding, >=0 = editing that index
-    const timers = [];              // stores interval IDs so we can clear them
+    let matches=[];
+    let editingIndex=-1;
+    const timers=[];
 
-    // World Cup teams array for validation
-    const WORLD_CUP_TEAMS = [
-        "Australia", "Iran", "Japan", "Jordan", "Qatar", "Saudi Arabia",
-        "South Korea", "Uzbekistan", "Canada", "Curacao", "Haiti", "Mexico",
-        "Panama", "United States", "Algeria", "Cape Verde", "Egypt", "Ghana", "Ivory Coast",
-        "Morocco", "Senegal", "South Africa", "Tunisia", "Argentina", "Brazil", "Colombia",
-        "Ecuador", "Paraguay", "Uruguay", "New Zealand", "Austria", "Belgium", "Croatia", 
-        "England", "France", "Germany", "Netherlands", "Norway", "Portugal", 
-        "Scotland", "Spain", "Switzerland"
+    const WORLD_CUP_TEAMS=[
+      "Australia","Iran","Japan","Jordan","Qatar","Saudi Arabia",
+      "South Korea","Uzbekistan","Canada","Curacao","Haiti","Mexico",
+      "Panama","United States","Algeria","Cape Verde","Egypt","Ghana","Ivory Coast",
+      "Morocco","Senegal","South Africa","Tunisia","Argentina","Brazil","Colombia",
+      "Ecuador","Paraguay","Uruguay","New Zealand","Austria","Belgium","Croatia",
+      "England","France","Germany","Netherlands","Norway","Portugal",
+      "Scotland","Spain","Switzerland"
     ];
 
-    // Map of team names to their official logo URLs (mostly flags)
-    const TEAM_LOGOS = {
+    const TEAM_LOGOS={
       "Australia":"allFlags/Flag_of_Australia_(converted).svg",
       "Iran":"allFlags/State_flag_of_Iran_(1964–1980).png",
       "Japan":"allFlags/Flag_of_Japan.png",
@@ -158,154 +247,159 @@
       "Scotland":"allFlags/Flag_of_Scotland.png",
       "Spain":"allFlags/Flag_of_Spain.png",
       "Switzerland":"allFlags/Flag-Switzerland.png"
-    
     };
 
-    // Populate datalist dynamically (Sam)
-    const datalist = document.getElementById('worldCupTeams');
-    WORLD_CUP_TEAMS.forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t;
+    const datalist=document.getElementById('worldCupTeams');
+    WORLD_CUP_TEAMS.forEach(t=>{
+      const opt=document.createElement('option');
+      opt.value=t;
       datalist.appendChild(opt);
     });
 
-    // Lecture 6: Function definition and loops (Sam)
-    function displayMatches() {
-      // Clear all previous timers to prevent flicker
-      timers.forEach(id => clearInterval(id));
-      timers.length = 0;
+    async function loadMatches() {
+      const response = await fetch('tracking.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action: 'get_matches'})
+      });
+      matches = await response.json();
+      const term = searchInput.value.toLowerCase();
+      displayMatches(term);
+    }
 
-      matchList.innerHTML = "";
-      matches.forEach((m, i) => {
-        const div = document.createElement('div');
-        div.className = 'match';
-
-        // Lecture 5–6: Adding image elements (Sam)
-        div.innerHTML = `
-          <img src="${m.logoA}" alt="${m.teamA}" class="team-logo">
-          <strong>${m.teamA}</strong> vs <strong>${m.teamB}</strong>
-          <img src="${m.logoB}" alt="${m.teamB}" class="team-logo"><br>
-          <small>${new Date(m.time).toLocaleString()}</small>
+    function displayMatches(filterTerm=""){
+      timers.forEach(id=>clearInterval(id));
+      timers.length=0;
+      matchList.innerHTML="";
+      const term=filterTerm.toLowerCase();
+      matches.forEach((m,i)=>{
+        const logoA = TEAM_LOGOS[m.TeamA] || '';
+        const logoB = TEAM_LOGOS[m.TeamB] || '';
+        const text=(m.TeamA+" "+m.TeamB+" "+new Date(m.Date).toLocaleString()).toLowerCase();
+        if(term&& !text.includes(term)) return;
+        const div=document.createElement('div');
+        div.className='match';
+        div.innerHTML=`
+          <img src="${logoA}" alt="${m.TeamA}" class="team-logo">
+          <strong>${m.TeamA}</strong> vs <strong>${m.TeamB}</strong>
+          <img src="${logoB}" alt="${m.TeamB}" class="team-logo"><br>
+          <small>${new Date(m.Date).toLocaleString()}</small>
           <p id="timer${i}"></p>
           <div style="margin-top:8px;">
-            <button class="btn btn-edit" data-index="${i}">Edit</button>
-            <button class="btn btn-delete" data-index="${i}">Delete</button>
+            <button class="btn btn-edit" data-id="${m.MatchID}">Edit</button>
+            <button class="btn btn-delete" data-id="${m.MatchID}">Delete</button>
           </div>
         `;
         matchList.appendChild(div);
-
-        // Lecture 8: Conditional logic for countdown (Nawal)
-        updateCountdown(i, m);
-        const intervalId = setInterval(() => updateCountdown(i, m), 1000);
+        updateCountdown(i,m);
+        const intervalId=setInterval(()=>updateCountdown(i,m),1000);
         timers.push(intervalId);
       });
-
-      // Attach edit/delete listeners
-      document.querySelectorAll('.btn-edit').forEach(btn => {
-        btn.onclick = () => startEdit(+btn.dataset.index);
+      document.querySelectorAll('.btn-edit').forEach(btn=>{
+        btn.onclick=()=>startEdit(btn.dataset.id);
       });
-      document.querySelectorAll('.btn-delete').forEach(btn => {
-        btn.onclick = () => deleteMatch(+btn.dataset.index);
+      document.querySelectorAll('.btn-delete').forEach(btn=>{
+        btn.onclick=()=>deleteMatch(btn.dataset.id);
       });
     }
 
-    // Lecture 8: Function with date/time comparison and conditions
-    function updateCountdown(idx, m) {
-      const now = new Date();
-      const matchTime = new Date(m.time);
-      const diff = matchTime - now;
-      const timer = document.getElementById(`timer${idx}`);
-      const box   = timer.parentElement;
-
-      if (diff > 0) {                               // upcoming
-        const h = Math.floor(diff / 3.6e6);
-        const min = Math.floor((diff % 3.6e6) / 6e4);
-        const sec = Math.floor((diff % 6e4) / 1e3);
-        timer.textContent = `Kickoff in: ${h}h ${min}m ${sec}s`;
-        box.className = 'match upcoming';
-      } else if (diff > -5.4e6) {                   // ongoing (90 min)
-        timer.textContent = 'Match is Live!';
-        box.className = 'match ongoing';
-      } else {                                      // completed
-        timer.textContent = 'Full Time';
-        box.className = 'match completed';
+    function updateCountdown(idx,m){
+      const now=new Date();
+      const matchTime=new Date(m.Date);
+      const diff=matchTime-now;
+      const timer=document.getElementById(`timer${idx}`);
+      if(!timer) return;
+      const box=timer.parentElement;
+      if(diff>0){
+        const h=Math.floor(diff/3.6e6);
+        const min=Math.floor((diff%3.6e6)/6e4);
+        const sec=Math.floor((diff%6e4)/1e3);
+        timer.textContent=`Kickoff in: ${h}h ${min}m ${sec}s`;
+        box.className='match upcoming';
+      }else if(diff>-5.4e6){
+        timer.textContent='Match is Live!';
+        box.className='match ongoing';
+      }else{
+        timer.textContent='Full Time';
+        box.className='match completed';
       }
     }
 
-    // Helper: Show temporary error
-    function showError(txt) {
-      errorMsg.textContent = txt;
-      errorMsg.style.display = 'block';
-      setTimeout(() => errorMsg.style.display = 'none', 5000);
+    function showError(txt){
+      errorMsg.textContent=txt;
+      errorMsg.style.display='block';
+      setTimeout(()=>errorMsg.style.display='none',5000);
     }
 
-    // Edit functionality
-    function startEdit(idx) {
-      const m = matches[idx];
-      document.getElementById('teamA').value = m.teamA;
-      document.getElementById('teamB').value = m.teamB;
-      document.getElementById('matchTime').value = m.time.slice(0,16);
-
-      editingIndex = idx;
-      formTitle.textContent = 'Edit Match';
-      submitBtn.textContent = 'Update';
-      cancelBtn.style.display = 'inline-block';
-      errorMsg.style.display = 'none';
+    function startEdit(id){
+      const m=matches.find(match => match.MatchID == id);
+      document.getElementById('teamA').value=m.TeamA;
+      document.getElementById('teamB').value=m.TeamB;
+      document.getElementById('matchTime').value=m.Date.slice(0,16);
+      editingIndex=id;
+      formTitle.textContent='Edit Match';
+      submitBtn.textContent='Update';
+      cancelBtn.style.display='inline-block';
+      errorMsg.style.display='none';
     }
 
-    function deleteMatch(idx) {
-      if (confirm('Delete this match?')) {
-        matches.splice(idx, 1);
-        saveAndRefresh();
+    async function deleteMatch(id){
+      if(confirm('Delete this match?')) {
+        const response = await fetch('tracking.php', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({action: 'delete_match', matchID: id})
+        });
+        const res = await response.json();
+        if (res.success) {
+          loadMatches();
+        }
       }
     }
 
-    function cancelEdit() {
-      editingIndex = -1;
-      formTitle.textContent = 'Add Match';
-      submitBtn.textContent = 'Add Match';
-      cancelBtn.style.display = 'none';
+    function cancelEdit(){
+      editingIndex=-1;
+      formTitle.textContent='Add Match';
+      submitBtn.textContent='Add Match';
+      cancelBtn.style.display='none';
       form.reset();
-      errorMsg.style.display = 'none';
+      errorMsg.style.display='none';
     }
 
-    function saveAndRefresh() {
-      localStorage.setItem('matches', JSON.stringify(matches));
-      displayMatches();          // this also clears old timers
-    }
-
-    // Lecture 6: Event handling (Ibrahim)
-    form.addEventListener('submit', e => {
+    form.addEventListener('submit',async e=>{
       e.preventDefault();
-      const teamA = document.getElementById('teamA').value.trim();
-      const teamB = document.getElementById('teamB').value.trim();
-      const time  = document.getElementById('matchTime').value;
-
-      if (!WORLD_CUP_TEAMS.includes(teamA)) return showError(`"${teamA}" is not a qualified team.`);
-      if (!WORLD_CUP_TEAMS.includes(teamB)) return showError(`"${teamB}" is not a qualified team.`);
-      if (teamA === teamB)                 return showError('Select two different teams.');
-
-      const logoA = TEAM_LOGOS[teamA];
-      const logoB = TEAM_LOGOS[teamB];
-      const newMatch = { teamA, teamB, time, logoA, logoB };
-
-      if (editingIndex >= 0) {
-        matches[editingIndex] = newMatch;
-        cancelEdit();
-      } else {
-        matches.push(newMatch);
-      }
-      saveAndRefresh();
-      form.reset();
+      const teamA=document.getElementById('teamA').value.trim();
+      const teamB=document.getElementById('teamB').value.trim();
+      const time=document.getElementById('matchTime').value;
+      if(!WORLD_CUP_TEAMS.includes(teamA)) return showError(`"${teamA}" is not a qualified team.`);
+      if(!WORLD_CUP_TEAMS.includes(teamB)) return showError(`"${teamB}" is not a qualified team.`);
+      if(teamA===teamB) return showError('Select two different teams.');
+      const data = {teamA, teamB, date: time, action: editingIndex >= 0 ? 'update_match' : 'add_match'};
+      if (editingIndex >= 0) data.matchID = editingIndex;
+      const response = await fetch('tracking.php', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+        const res = await response.json();
+        if (res.success) {
+          cancelEdit();
+          loadMatches();
+          form.reset();
+        } else {
+          showError('Operation Failed');
+        }
     });
 
-    cancelBtn.addEventListener('click', cancelEdit);
+    cancelBtn.addEventListener('click',cancelEdit);
 
-    // Lecture 8: Loop + condition to load stored data
-    if (matches.length) displayMatches();
+    searchInput.addEventListener('input',()=>{
+      const term=searchInput.value.toLowerCase();
+      displayMatches(term);
+    });
+
+    loadMatches();
   </script>
-    <footer>
-        © 2026 FIFA World Cup
-    </footer>
+  <footer>© 2026 FIFA World Cup</footer>
 </body>
 </html>
