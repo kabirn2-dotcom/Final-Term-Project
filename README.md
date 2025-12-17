@@ -13,3 +13,5 @@ Nawal:
 Ibrahim: 
 - Login Page arcitecture and design
 - Searchbar functionality
+
+We used https://v3.football.api-sports.io/fixtures?league=1&season=2026 for our API
