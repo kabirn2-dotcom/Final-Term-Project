@@ -1,4 +1,27 @@
 <?php
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "fifatracker";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+    die("Connection Failed");
+}
+
+$trackedMatches = [];
+$sql = "SELECT TeamA, TeamB, `Date` FROM matches ORDER BY `Date` ASC";
+$result = $conn->query($sql);
+
+while ($row = $result->fetch_assoc()) {
+    $trackedMatches[] = [
+        "time" => date('c', strtotime($row['Date'])),
+        "teamA" => $row['TeamA'],
+        "teamB" => $row['TeamB'],
+        "source" => "tracked"
+    ];
+}
+$conn->close();
 // ================================
 // API-Football Integration
 // ================================
@@ -73,8 +96,20 @@ $fallbackMatches = [
     ["time"=>"2026-06-17T13:00:00Z","teamA"=>"Portugal","teamB"=>"TBD"]
 ];
 
-// If API has no data, use fallback
+$officalMatches = count($apiMatches) > 0 ? $apiMatches : $fallbackMatches;
+
+$matches = array_merge($trackedMatches, $officalMatches);
+
+$grouped = [];
+foreach ($matches as $m) {
+    $dateKey = substr($m['time'], 0, 10);
+    $grouped[$dateKey][] = $m;
+}
+ksort($grouped);
+
+/* If API has no data, use fallback
 $matches = count($apiMatches) > 0 ? $apiMatches : $fallbackMatches;
+*/
 ?>
 
 <!DOCTYPE html>
@@ -163,6 +198,19 @@ h1 { font-size: 48px; margin: 25px 0; }
     background: #dc3545;
     color: white;
 }
+
+.tracked { border-left: 5px solid #28a745; }
+.api { border-left: 5px solid #007bff; }
+.fallback { border-left: 5px solid #ffc107 }
+
+.api-status { 
+    display:inline-block; 
+    padding: 6px 14px;
+    border-radius: 20px; 
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
 </style>
 </head>
 
@@ -201,8 +249,12 @@ foreach ($grouped as $date => $games):
 
         <?php foreach ($games as $g):
             $time = new DateTime($g['time']);
+            $matchClass = '';
+            if (isset($g['source'])) {
+                $matchClass = $g['source'];
+            }
         ?>
-        <div class="match">
+        <div class="match <?= $matchClass ?>">
             <div class="time"><?= $time->format("g:i A") ?></div>
             <?= htmlspecialchars($g['teamA']) ?> vs <?= htmlspecialchars($g['teamB']) ?>
         </div>
